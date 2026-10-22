@@ -1,0 +1,101 @@
+import { useEffect, useRef, useState } from "react";
+import { usePathname } from "expo-router";
+import { clinic, routes } from "../config/site";
+import { Brand, CallButton, PortalLink } from "./Links.web";
+import { Icon } from "./Icon";
+
+export default function Header() {
+  const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  const menu = useRef<HTMLButtonElement>(null);
+  const nav = useRef<HTMLElement>(null);
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
+  useEffect(() => {
+    const desktop = window.matchMedia("(min-width: 1281px)");
+    const reset = () => { if (desktop.matches) setOpen(false); };
+    desktop.addEventListener("change", reset);
+    return () => desktop.removeEventListener("change", reset);
+  }, []);
+  useEffect(() => {
+    const close = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && open) {
+        setOpen(false);
+        menu.current?.focus();
+      }
+    };
+    const outside = (event: PointerEvent) => {
+      if (
+        open &&
+        !nav.current?.contains(event.target as Node) &&
+        !menu.current?.contains(event.target as Node)
+      )
+        setOpen(false);
+    };
+    document.addEventListener("keydown", close);
+    document.addEventListener("pointerdown", outside);
+    return () => {
+      document.removeEventListener("keydown", close);
+      document.removeEventListener("pointerdown", outside);
+    };
+  }, [open]);
+  return (
+    <>
+      <a href="#main" className="skip">
+        Skip to content
+      </a>
+      <div className="utility">
+        <div className="wrap">
+          <span>
+            <i className="dot" />
+            Walk-in care in Indianapolis · {clinic.hoursNote}
+          </span>
+          <PortalLink className="utility-portal"><Icon name="account" /> Patient portal</PortalLink>
+        </div>
+      </div>
+      <header>
+        <div className="wrap nav">
+          <Brand />
+          <nav
+            ref={nav}
+            className={`links${open ? " open" : ""}`}
+            id="navigation"
+            aria-label="Main navigation"
+          >
+            {routes.slice(0, 5).map((route) => (
+              <a
+                key={route.id}
+                href={route.path}
+                aria-current={pathname === route.path ? "page" : undefined}
+                onClick={() => setOpen(false)}
+              >
+                <Icon name={route.icon} /> {route.label}
+              </a>
+            ))}
+            <PortalLink className="menu-portal" onClick={() => setOpen(false)}>
+              <Icon name="account" /> Patient portal
+            </PortalLink>
+          </nav>
+          <div className="nav-actions">
+            <PortalLink className="portal">
+              Patient portal <Icon name="external" />
+            </PortalLink>
+            <CallButton />
+            <button
+              ref={menu}
+              className="menu"
+              aria-expanded={open}
+              aria-controls="navigation"
+              aria-label={open ? "Close navigation" : "Open navigation"}
+              onClick={() => setOpen(!open)}
+            >
+              <span className="menu-open-icon"><Icon name="menu" /></span>
+              <span className="menu-close-icon"><Icon name="close" /></span>
+            </button>
+          </div>
+        </div>
+      </header>
+    </>
+  );
+}

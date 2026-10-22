@@ -1,0 +1,148 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "smc-urgentcare",
+  "main": "worker/index.mjs",
+  "compatibility_date": "2026-10-18",
+  "workers_dev": false,
+  "preview_urls": false,
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1,
+    "redact_query_string": true,
+    "logs": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "invocation_logs": true,
+      "persist": true
+    },
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 1,
+      "persist": true
+    },
+    "issues": {
+      "enabled": true
+    }
+  },
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "html_handling": "drop-trailing-slash",
+    "not_found_handling": "404-page",
+    "run_worker_first": true
+  },
+  "vars": {
+    "ENVIRONMENT": "production",
+    "SITE_ORIGIN": "https://smcurgentcareindy.com",
+    "CONTACT_ALLOWED_ORIGINS": "https://smcurgentcareindy.com",
+    "CONTACT_FROM": "front-desk@smcurgentcareindy.com",
+    "TURNSTILE_SITE_KEY": "0x4AAAAAAFa2g5YSlEYZhv83",
+    "CONTACT_TO": "hligon@getsparqd.com",
+    "CONTACT_NOTIFICATION_FROM": "front-desk@smcurgentcareindy.com"
+  },
+  "env": {
+    "sandbox": {
+      "name": "smc-urgentcare-sandbox",
+      "vars": {
+        "ENVIRONMENT": "sandbox",
+        "SITE_ORIGIN": "https://smc-urgentcare-sandbox.hligon.workers.dev",
+        "CONTACT_ALLOWED_ORIGINS": "https://smc-urgentcare-sandbox.hligon.workers.dev",
+        "CONTACT_FROM": "front-desk@smcurgentcareindy.com",
+        "TURNSTILE_SITE_KEY": "0x4AAAAAAFa2g5YSlEYZhv83",
+        "CONTACT_TO": "hligon@getsparqd.com",
+        "CONTACT_NOTIFICATION_FROM": "front-desk@smcurgentcareindy.com"
+      },
+      "workers_dev": true,
+      "routes": [],
+      "send_email": [
+        {
+          "name": "CONTACT_EMAIL",
+          "allowed_sender_addresses": [
+            "front-desk@smcurgentcareindy.com"
+          ]
+        }
+      ],
+      "ratelimits": [
+        {
+          "name": "CONTACT_RATE_LIMITER",
+          "namespace_id": "181094232",
+          "simple": {
+            "limit": 5,
+            "period": 60
+          }
+        }
+      ],
+      "preview_urls": false
+    },
+    "production": {
+      "name": "smc-urgentcare",
+      "vars": {
+        "ENVIRONMENT": "production",
+        "SITE_ORIGIN": "https://smcurgentcareindy.com",
+        "CONTACT_ALLOWED_ORIGINS": "https://smcurgentcareindy.com",
+        "CONTACT_FROM": "front-desk@smcurgentcareindy.com",
+        "TURNSTILE_SITE_KEY": "0x4AAAAAAFa2g5YSlEYZhv83",
+        "CONTACT_TO": "hligon@getsparqd.com",
+        "CONTACT_NOTIFICATION_FROM": "front-desk@smcurgentcareindy.com"
+      },
+      "workers_dev": false,
+      "routes": [
+        {
+          "pattern": "smcurgentcareindy.com",
+          "custom_domain": true
+        },
+        {
+          "pattern": "www.smcurgentcareindy.com",
+          "custom_domain": true
+        }
+      ],
+      "send_email": [
+        {
+          "name": "CONTACT_EMAIL",
+          "allowed_sender_addresses": [
+            "front-desk@smcurgentcareindy.com"
+          ]
+        }
+      ],
+      "ratelimits": [
+        {
+          "name": "CONTACT_RATE_LIMITER",
+          "namespace_id": "181094231",
+          "simple": {
+            "limit": 5,
+            "period": 60
+          }
+        }
+      ],
+      "preview_urls": false
+    }
+  },
+  "routes": [
+    {
+      "pattern": "smcurgentcareindy.com",
+      "custom_domain": true
+    },
+    {
+      "pattern": "www.smcurgentcareindy.com",
+      "custom_domain": true
+    }
+  ],
+  "send_email": [
+    {
+      "name": "CONTACT_EMAIL",
+      "allowed_sender_addresses": [
+        "front-desk@smcurgentcareindy.com"
+      ]
+    }
+  ],
+  "ratelimits": [
+    {
+      "name": "CONTACT_RATE_LIMITER",
+      "namespace_id": "181094231",
+      "simple": {
+        "limit": 5,
+        "period": 60
+      }
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import worker from '../worker/index.mjs';
+
+test('production custom domain and sandbox workers.dev serve public website without patient authentication', async () => {
+  const config = JSON.parse(await readFile(new URL('../wrangler.jsonc', import.meta.url), 'utf8'));
+  assert.equal(config.workers_dev, false);
+  assert.equal(config.preview_urls, false);
+  assert.equal(config.env.production.workers_dev, false);
+  assert.equal(config.env.production.preview_urls, false);
+  assert.equal(config.env.sandbox.workers_dev, true);
+  assert.equal(config.env.sandbox.preview_urls, false);
+  for (const [host, environment] of [['smcurgentcareindy.com', 'production'], ['smc-urgentcare-sandbox.hligon.workers.dev', 'sandbox']]) {
+    for (const path of ['/', '/services', '/contact']) {
+      const response = await worker.fetch(new Request('https://' + host + path), { ENVIRONMENT: environment, ASSETS: { fetch: async () => new Response('Public website', { headers: { 'Content-Type': 'text/html' } }) } });
+      assert.equal(response.status, 200);
+      assert.equal(response.headers.get('Location'), null);
+      assert.equal(response.headers.has('Set-Cookie'), false);
+      assert.equal(response.headers.get('X-Robots-Tag'), host.endsWith('.workers.dev') ? 'noindex, nofollow' : null);
+    }
+  }
+});
+
+test('production WWW redirect preserves path and query', async () => {
+  const response = await worker.fetch(new Request('https://www.smcurgentcareindy.com/services?source=search'), { ENVIRONMENT: 'production' });
+  assert.equal(response.status, 308);
+  assert.equal(response.headers.get('Location'), 'https://smcurgentcareindy.com/services?source=search');
+});
+
+test('deployment targets preserve domain ownership and isolate contact configuration', async () => {
+  const config = JSON.parse(await readFile(new URL('../wrangler.jsonc', import.meta.url), 'utf8'));
+  assert.equal(config.name, 'smc-urgentcare');
+  assert.equal(config.env.production.name, config.name);
+  assert.equal(config.env.sandbox.name, 'smc-urgentcare-sandbox');
+  assert.deepEqual(config.env.production.routes, config.routes);
+  assert.deepEqual(config.routes.map(route => route.pattern).sort(), ['smcurgentcareindy.com', 'www.smcurgentcareindy.com']);
+  assert.ok(config.routes.every(route => route.custom_domain === true));
+  assert.deepEqual(config.env.sandbox.routes, []);
+  assert.equal(config.d1_databases, undefined);
+  assert.equal(config.env.production.d1_databases, undefined);
+  assert.equal(config.env.sandbox.d1_databases, undefined);
+  assert.notEqual(config.env.production.ratelimits[0].namespace_id, config.env.sandbox.ratelimits[0].namespace_id);
+  assert.equal(config.vars.CONTACT_TO, 'hligon@getsparqd.com');
+  assert.equal(config.env.sandbox.vars.CONTACT_TO, 'hligon@getsparqd.com');
+  assert.equal(config.send_email[0].name, 'CONTACT_EMAIL');
+  const sandboxOrigin = 'https://' + config.env.sandbox.name + '.hligon.workers.dev';
+  assert.equal(config.env.sandbox.vars.SITE_ORIGIN, sandboxOrigin);
+  assert.equal(config.env.sandbox.vars.CONTACT_ALLOWED_ORIGINS, sandboxOrigin);
+});
