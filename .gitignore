@@ -1,0 +1,10 @@
+node_modules/
+.expo/
+dist/
+dist-native/
+.wrangler/
+.env*
+.dev.vars*
+!.dev.vars.sandbox.example
+*.tsbuildinfo
+.DS_Store
